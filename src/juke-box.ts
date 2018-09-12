@@ -84,6 +84,13 @@ export class JukeBox {
         return SpotifyClient.resume();
     }
 
+    async reset(): Promise<boolean> {
+        await this.pause();
+        this.playing = undefined;
+        this.playlist = [];
+        return true;
+    }
+
     async queue(id: string, next?: boolean, now?: boolean): Promise<number> {
         const playable = this.searchCache[id];
         if (!playable) {

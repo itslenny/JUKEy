@@ -1,7 +1,8 @@
 import { JukeBox } from './juke-box';
 import { formatTime } from './util/format-time';
+import { doesNotReject } from 'assert';
 
-const CHAT_COMMANDS = new Set(['find', 'play', 'pause', 'skip', 'status', 'help', 'vol']);
+const CHAT_COMMANDS = new Set(['find', 'play', 'pause', 'skip', 'status', 'help', 'vol', 'reset']);
 const CHAT_COMMAND_ALIASES = { search: 'find', volume: 'vol', next: 'skip' };
 
 export class ChatHandler {
@@ -26,10 +27,14 @@ export class ChatHandler {
 
         const handler = this[command + 'Handler'];
         if (!handler) {
-            return `I know about \`${command}\`, but I have no clue what to do with it. (try status or help)`;
+            return `I know about \`${command}\`, but I have no clue what to do with it.`;
         }
 
         return handler.bind(this)(text);
+    }
+
+    private async resetHandler(): Promise<string> {
+        return await this.jukebox.reset() ? 'All done! Fresh and so clean clean!' : `Hmm... Couldn't get it done. Sorry.`;
     }
 
     private helpHandler(): Promise<string> {
@@ -44,7 +49,8 @@ export class ChatHandler {
             '/jukey skip - skips to the next song \n' +
             '/jukey vol up - volume up \n' +
             '/jukey vol down - volume down \n' +
-            '/jukey status - get player status \n'
+            '/jukey status - get player status \n' +
+            '/jukey reset - resets jukey (stops music / clears playlist) \n'
         );
     }
 

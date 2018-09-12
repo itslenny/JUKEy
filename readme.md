@@ -24,6 +24,7 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 * `/jukey vol up` - volume up
 * `/jukey vol down` - volume down
 * `/jukey status` - get player status
+* `/jukey reset` - resets jukey (stops music / clears playlist)
 
 
 ## Server Setup
