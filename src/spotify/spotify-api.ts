@@ -21,6 +21,7 @@ export interface SpotifyPlayable {
     name: string;
     artists: SpotifyArtist[];
     type: string;
+    total_tracks: number;
 }
 
 export interface SpotifySearchResult {

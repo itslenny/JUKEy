@@ -70,17 +70,16 @@
                 response.json().then(data => {
                     const row = document.createElement('div');
 
-                    if (response.status === 200) {
+                    if (response.ok && response.status === 200) {
                         row.innerText = data.text;
                     } else {
-                        console.log('ERROR!');
-                        row.innerText = data
+                        row.innerText = 'ERROR: ' + response.status + ' - ' + response.statusText;
                     }
 
                     jukeyView.appendChild(row);
                     jukeyView.scrollTo(0, jukeyView.scrollHeight + 100);
                 });
-            });
+            })
             jukeyInput.value = '';
         })
 

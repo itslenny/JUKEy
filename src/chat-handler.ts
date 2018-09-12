@@ -67,11 +67,21 @@ export class ChatHandler {
 
     private async findHandler(input: string): Promise<string> {
         const searchResults = await this.jukebox.search(input);
-        return `\n` +
-            `*${input} (Tracks):* \n` +
-            searchResults.tracks.map(track => `• ${track.id} – *${track.name}* by *${track.artists}*`).join('\n') + '\n\n' +
-            `*${input} (Albums):* \n` +
-            searchResults.albums.map(album => `• ${album.id} – *${album.name}* by *${album.artists}*`).join('\n') + '\n';
+
+        const trackCount = (searchResults.tracks && searchResults.tracks.length) || 0;
+        const albumCount = (searchResults.albums && searchResults.albums.length) || 0;
+
+        const trackResult = trackCount > 0 ?
+            `*Tracks (${trackCount}):* \n` + searchResults.tracks.map(track => `• ${track.id} – *${track.name}* by *${track.artists}*`).join('\n') + '\n\n' :
+            `No tracks found. \n`;
+
+        const albumResult = albumCount > 0 ?
+            `*Albums (${albumCount}):* \n` + searchResults.albums.map(album => `• ${album.id} – *${album.name}* by *${album.artists}* (${album.tracks} tracks)`).join('\n') + '\n' :
+            `No albums found. \n`;
+
+        return `JUKEy Search Results \`${input}\`: \n\n ${trackResult}${albumResult}`;
+
+
     }
 
     private async playHandler(input?: string): Promise<string> {

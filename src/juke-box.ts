@@ -14,6 +14,7 @@ export interface JukeBoxPlayable {
     serviceHref: string;
     serviceId: string;
     type: string;
+    tracks: number;
 }
 
 export interface JukeBoxStatus {
@@ -48,7 +49,6 @@ export class JukeBox {
     async search(term: string): Promise<JukeBoxSearchResult> {
         this.searchCount++;
         const searchResult = await SpotifyApi.search(term);
-
         return {
             tracks: this.createPlayable(searchResult.tracks),
             albums: this.createPlayable(searchResult.albums),
@@ -207,16 +207,17 @@ export class JukeBox {
     }
 
     private createPlayable(playables: SpotifyPlayable[]): JukeBoxPlayable[] {
-        return playables.map((track, i) => {
-            const type = track.type.charAt(0);
+        return playables.map((playable, i) => {
+            const type = playable.type.charAt(0);
             const out: JukeBoxPlayable = {
                 id: this.searchCount + type + (i + 1),
-                name: track.name,
-                artists: track.artists.map(artist => artist.name).join(', '),
-                serviceHref: track.href,
-                serviceUri: track.uri,
-                serviceId: track.id,
-                type: track.type,
+                name: playable.name,
+                artists: playable.artists.map(artist => artist.name).join(', '),
+                serviceHref: playable.href,
+                serviceUri: playable.uri,
+                serviceId: playable.id,
+                type: playable.type,
+                tracks: playable.total_tracks || 1,
             };
 
             this.searchCache[out.id] = out;
