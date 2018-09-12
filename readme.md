@@ -14,7 +14,7 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 * `/jukey play [song id]` - adds a song to the queue
 * `/jukey play [song id] next` - adds a song to the queue to be played next
 * `/jukey play [song id] now` - starts playing your song immediately
-* `/jukey paus` - pauses the music
+* `/jukey pause` - pauses the music
 * `/jukey play` - unpauses the music
 * `/jukey skip` - skips to the next song
 * `/jukey vol up` - volume up
