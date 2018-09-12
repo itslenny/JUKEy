@@ -8,7 +8,9 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 
 ## Basic Example
 
-![](https://raw.githubusercontent.com/itslenny/JUKEy/master/images/screenshot.png)
+![](https://raw.githubusercontent.com/itslenny/JUKEy/master/images/screenshot1.png)
+
+![](https://raw.githubusercontent.com/itslenny/JUKEy/master/images/screenshot2.png)
 
 ## Slack Commands
 
