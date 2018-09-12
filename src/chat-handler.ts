@@ -2,7 +2,7 @@ import { JukeBox } from './juke-box';
 import { formatTime } from './util/format-time';
 
 const CHAT_COMMANDS = new Set(['find', 'play', 'pause', 'skip', 'status', 'help', 'vol']);
-const CHAT_COMMAND_ALIASES = { search: 'find', volume: 'vol' };
+const CHAT_COMMAND_ALIASES = { search: 'find', volume: 'vol', next: 'skip' };
 
 export class ChatHandler {
 
@@ -115,7 +115,7 @@ export class ChatHandler {
     }
 
     private async skipHandler(): Promise<string> {
-        return await this.jukebox.next() ? 'On to bigger and better things!' : `Sorry, I can't do that`;
+        return await this.jukebox.skip() ? 'On to bigger and better things!' : `Sorry, I can't do that`;
     }
 
     private async volHandler(input: string = ''): Promise<string> {

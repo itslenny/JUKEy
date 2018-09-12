@@ -36,14 +36,14 @@ export class JukeBox {
     private playing: JukeBoxPlayable;
 
     private previousLength: number;
-    private statusInterval;
+    private checkPlayerPositionInterval: NodeJS.Timer;
 
     constructor() {
 
     }
 
     destroy() {
-        this.stopStatusInterval();
+        this.stopCheckPlayerPositionInterval();
     }
 
     async search(term: string): Promise<JukeBoxSearchResult> {
@@ -70,7 +70,7 @@ export class JukeBox {
 
         if (result) {
             this.playing = playable;
-            this.startStatusInterval();
+            this.startCheckPlayerPositionInterval();
         }
 
         return result;
@@ -98,7 +98,7 @@ export class JukeBox {
         const state = await SpotifyClient.getState();
 
         if (state === 'playing' && !now) {
-            this.startStatusInterval();
+            this.startCheckPlayerPositionInterval();
             if (next) {
                 return this.playlist.unshift(...addPlayables) - addPlayables.length;
             } else {
@@ -150,12 +150,20 @@ export class JukeBox {
         return SpotifyClient.setVol(val);
     }
 
-    async next(): Promise<boolean> {
-        // if we're at the end of the playlist we can try just hitting next on spotify
-        return await this.playNextSong() || await SpotifyClient.next();
+    /**
+     * Skips current song
+     */
+    async skip(): Promise<boolean> {
+        // if the playlist is empty hit next on spotify so the UX is a song change
+        return (await this.playNextSong()) || (await SpotifyClient.next());
     }
 
+    /**
+     * Plays next song in playlist
+     */
     private async playNextSong(): Promise<boolean> {
+        this.stopCheckPlayerPositionInterval();
+
         if (this.playlist.length < 1) {
             return false;
         }
@@ -170,40 +178,49 @@ export class JukeBox {
         return result;
     }
 
-    private async checkState() {
+    /**
+     * Detects end of track and plays next item in playlist
+     */
+    private async checkPlayerPosition() {
         const position = await SpotifyClient.getCurrentTrackPosition();
         const length = await SpotifyClient.getCurrentTrackLength();
+
+        // Fixes bug where a check happens while we're waiting for the above to resolve
+        // this causes a double skip if it happens during a "skip" action
+        if (!this.checkPlayerPositionInterval) {
+            return;
+        }
 
         if (!position || !length) {
             return;
         }
 
         const roundedPosition = Math.ceil(position);
-        const roundeLength = Math.floor(length);
+        const roundedLength = Math.floor(length);
 
-        if (roundedPosition >= roundeLength || (this.previousLength && this.previousLength !== roundeLength)) {
-            this.stopStatusInterval();
+        // check if track length changes incase we miss the end of song position
+        if (roundedPosition >= roundedLength || (this.previousLength && this.previousLength !== roundedLength)) {
             this.playNextSong();
-            this.previousLength = undefined;
         } else {
-            this.previousLength = roundeLength;
+            this.previousLength = roundedLength;
         }
     }
 
 
-    private stopStatusInterval() {
-        if (!this.statusInterval) {
+    private stopCheckPlayerPositionInterval() {
+        if (!this.checkPlayerPositionInterval) {
             return;
         }
-        clearInterval(this.statusInterval);
-        this.statusInterval = undefined;
+        clearInterval(this.checkPlayerPositionInterval);
+        this.previousLength = undefined;
+        this.checkPlayerPositionInterval = undefined;
     }
 
-    private startStatusInterval() {
-        if (this.statusInterval) {
+    private startCheckPlayerPositionInterval() {
+        if (this.checkPlayerPositionInterval) {
             return;
         }
-        this.statusInterval = setInterval(() => this.checkState(), 100);
+        this.checkPlayerPositionInterval = setInterval(() => this.checkPlayerPosition(), 100);
     }
 
     private createPlayable(playables: SpotifyPlayable[]): JukeBoxPlayable[] {
