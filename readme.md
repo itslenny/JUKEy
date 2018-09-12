@@ -6,6 +6,8 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 
 > Note: this was slapped together in a few hours, but I'm using it daily at my work and will refine it over time.
 
+## Basic Example
+
 ![](https://raw.githubusercontent.com/itslenny/JUKEy/master/images/screenshot.png)
 
 ## Slack Commands
