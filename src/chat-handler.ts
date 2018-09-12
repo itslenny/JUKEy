@@ -22,7 +22,7 @@ export class ChatHandler {
         }
 
         if (!CHAT_COMMANDS.has(command)) {
-            return `\`${command}\`?!?! Never heard of 'em.`;
+            return `\`${command}\`?!?! Never heard of 'em. (try \`/jukey help\`)`;
         }
 
         const handler = this[command + 'Handler'];
