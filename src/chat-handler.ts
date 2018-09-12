@@ -1,4 +1,5 @@
 import { JukeBox } from './juke-box';
+import { formatTime } from './util/format-time';
 
 const CHAT_COMMANDS = new Set(['find', 'play', 'pause', 'skip', 'status', 'help', 'vol']);
 const CHAT_COMMAND_ALIASES = { search: 'find', volume: 'vol' };
@@ -52,12 +53,6 @@ export class ChatHandler {
         let upcoming = status.playlist.slice(0, 10).map(t => `• ${t.name} by ${t.artists}`).join('\n');
         if (status.playlist.length > 10) {
             upcoming += `\n• _...and ${status.playlist.length - 10} more_`;
-        }
-
-        function formatTime(time: number): string {
-            const seconds = time % 60;
-            const minutes = Math.floor(time / 60);
-            return ('0' + minutes).slice(-2) + ':' + ('0' + seconds).slice(-2);
         }
 
         return Promise.resolve(
@@ -119,14 +114,16 @@ export class ChatHandler {
         if (input === '') {
             return `Current volume ${currentVol}%. Use vol up / vol down / vol [number] to change`;
         } else if (input === 'up') {
-            if (await this.jukebox.volUp()) {
-                return 'Pumping it up!';
+            const volUpResult = await this.jukebox.volUp();
+            if (volUpResult !== -1) {
+                return `Pumping it up! (${volUpResult}%)`;
             } else {
                 return 'It is already on 11. Maybe get bigger speakers?'
             }
         } else if (input === 'down') {
-            if (await this.jukebox.volDown()) {
-                return 'Taking it down a notch...';
+            const volDownResult = await this.jukebox.volDown();
+            if (volDownResult !== -1) {
+                return `Taking it down a notch...  (${volDownResult}%)`;
             } else {
                 return 'Looks like this is as quiet as it goes.';
             }
@@ -136,8 +133,8 @@ export class ChatHandler {
             if (isNaN(val) || val < 0 || val > 100) {
                 return 'I can on handle `vol up` or `vol down` or `vol [number]` (0-100).';
             } else {
-                await this.jukebox.setVol(val);
-                return `Aye Aye! Changing volume from ${currentVol}% to ${val}%`;
+                const volResult = await this.jukebox.setVol(val);
+                return `Aye Aye! Changing volume from ${currentVol}% to ${volResult}%`;
             }
         }
 

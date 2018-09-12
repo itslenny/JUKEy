@@ -21,14 +21,17 @@ const VOLUME_INCREMENT = 10;
 
 export type SpotifyState = 'playing' | 'stopped' | 'paused';
 
+/**
+ * Controls spotify player via AppleScript
+ */
 export class SpotifyClient {
 
-    static play(uri: string) {
-        const result = this.runCommand(SPOTIFY_DO_COMMANDS.play(uri));
+    static async play(uri: string): Promise<boolean> {
+        await this.runCommand(SPOTIFY_DO_COMMANDS.play(uri));
         return true;
     }
 
-    static async pause() {
+    static async pause(): Promise<boolean> {
         const state = await SpotifyClient.getState();
         if (state === 'playing') {
             await this.runCommand(SPOTIFY_DO_COMMANDS.pause());
@@ -37,7 +40,7 @@ export class SpotifyClient {
         return false;
     }
 
-    static async resume() {
+    static async resume(): Promise<boolean> {
         const state = await SpotifyClient.getState();
 
         if (state !== 'playing') {
@@ -47,65 +50,65 @@ export class SpotifyClient {
         return false;
     }
 
-    static async next() {
+    static async next(): Promise<boolean> {
         await this.runCommand(SPOTIFY_DO_COMMANDS.next());
         return true;
     }
 
     static async getVol(): Promise<number> {
-        return parseInt(await this.runCommand(SPOTIFY_GET_COMMANDS.volume));
+        const vol = parseInt(await this.runCommand(SPOTIFY_GET_COMMANDS.volume), 10);
+        // round to 10s - Spotify is off by 1 even when explicitly set for odd 10s (10, 30, 50, 70...)
+        return Math.ceil(vol / VOLUME_INCREMENT) * VOLUME_INCREMENT;
     }
 
-    static async volUp() {
+    static async volUp(): Promise<number> {
         const vol = await SpotifyClient.getVol();
         if (vol >= 100) {
-            return false;
+            return -1;
         }
-
-        await SpotifyClient.setVol(Math.min(100, vol + VOLUME_INCREMENT));
-        return true;
+        return SpotifyClient.setVol(Math.min(100, vol + VOLUME_INCREMENT));
     }
 
-    static async volDown() {
+    static async volDown(): Promise<number> {
         const vol = await SpotifyClient.getVol();
         if (vol <= 0) {
-            return false;
+            return -1;
         }
 
-        await SpotifyClient.setVol(Math.max(0, vol - VOLUME_INCREMENT));
-        return true;
+        return SpotifyClient.setVol(Math.max(0, vol - VOLUME_INCREMENT));
     }
 
-    static async setVol(val: number) {
-        if(isNaN(val) || val < 0 || val > 100) {
-            return false;
+    static async setVol(val: number): Promise<number> {
+        if (isNaN(val) || val < 0 || val > 100) {
+            return -1;
         }
+        val = Math.ceil(val / VOLUME_INCREMENT) * VOLUME_INCREMENT
         await this.runCommand(SPOTIFY_DO_COMMANDS.volume(val));
-        return true;
+        return val;
     }
 
     static getState(): Promise<SpotifyState> {
         return <any>SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.state);
     }
 
-    static getArtist() {
+    static getArtist(): Promise<string> {
         return SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.artist);
     }
 
-    static getAlbum() {
+    static getAlbum(): Promise<string> {
         return SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.album);
     }
 
-    static getTrack() {
+    static getTrack(): Promise<string> {
         return SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.track);
     }
 
-    static getCurrentTrackPosition() {
-        return SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.position);
+    static async getCurrentTrackPosition(): Promise<number> {
+        return parseFloat('0' + await SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.position));
     }
 
-    static getCurrentTrackLength() {
-        return SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.length);
+    static async getCurrentTrackLength(): Promise<number> {
+        return parseFloat('0' + await SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.length));
     }
 
     private static runCommand(command: string): Promise<string> {

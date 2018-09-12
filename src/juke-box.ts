@@ -1,5 +1,5 @@
-import { SpotifyClient } from './spotify-client';
-import { SpotifyApi, SpotifyPlayable } from './spotify-api';
+import { SpotifyClient } from './spotify/spotify-client';
+import { SpotifyApi, SpotifyPlayable } from './spotify/spotify-api';
 
 export interface JukeBoxSearchResult {
     tracks: JukeBoxPlayable[];
@@ -43,40 +43,6 @@ export class JukeBox {
 
     destroy() {
         this.stopStatusInterval();
-    }
-
-    private stopStatusInterval() {
-        if (!this.statusInterval) {
-            return;
-        }
-        clearInterval(this.statusInterval);
-        this.statusInterval = undefined;
-    }
-
-    private startStatusInterval() {
-        if (this.statusInterval) {
-            return;
-        }
-        this.statusInterval = setInterval(() => this.checkState(), 100);
-    }
-
-    private createPlayable(playables: SpotifyPlayable[]): JukeBoxPlayable[] {
-        return playables.map((track, i) => {
-            const type = track.type.charAt(0);
-            const out: JukeBoxPlayable = {
-                id: this.searchCount + type + (i + 1),
-                name: track.name,
-                artists: track.artists.map(artist => artist.name).join(', '),
-                serviceHref: track.href,
-                serviceUri: track.uri,
-                serviceId: track.id,
-                type: track.type,
-            };
-
-            this.searchCache[out.id] = out;
-
-            return out;
-        });
     }
 
     async search(term: string): Promise<JukeBoxSearchResult> {
@@ -149,8 +115,8 @@ export class JukeBox {
     }
 
     async getStatus(): Promise<JukeBoxStatus> {
-        const position = Math.ceil(parseFloat(await SpotifyClient.getCurrentTrackPosition()));
-        const length = Math.floor(parseFloat(await SpotifyClient.getCurrentTrackLength()));
+        const position = Math.ceil(await SpotifyClient.getCurrentTrackPosition());
+        const length = Math.floor(await SpotifyClient.getCurrentTrackLength());
         const trackName = await SpotifyClient.getTrack();
         const artistName = await SpotifyClient.getArtist();
         const state = await SpotifyClient.getState();
@@ -172,15 +138,15 @@ export class JukeBox {
         return SpotifyClient.getVol();
     }
 
-    volUp(): Promise<boolean> {
+    volUp(): Promise<number> {
         return SpotifyClient.volUp();
     }
 
-    volDown(): Promise<boolean> {
+    volDown(): Promise<number> {
         return SpotifyClient.volDown();
     }
 
-    setVol(val: number): Promise<boolean> {
+    setVol(val: number): Promise<number> {
         return SpotifyClient.setVol(val);
     }
 
@@ -205,22 +171,58 @@ export class JukeBox {
     }
 
     private async checkState() {
-        const p = await SpotifyClient.getCurrentTrackPosition();
-        const l = await SpotifyClient.getCurrentTrackLength();
+        const position = await SpotifyClient.getCurrentTrackPosition();
+        const length = await SpotifyClient.getCurrentTrackLength();
 
-        if (!p || !l) {
+        if (!position || !length) {
             return;
         }
 
-        const position = Math.ceil(parseFloat(p));
-        const length = Math.floor(parseFloat(l));
+        const roundedPosition = Math.ceil(position);
+        const roundeLength = Math.floor(length);
 
-        if (position >= length || (this.previousLength && this.previousLength !== length)) {
+        if (roundedPosition >= roundeLength || (this.previousLength && this.previousLength !== roundeLength)) {
             this.stopStatusInterval();
             this.playNextSong();
             this.previousLength = undefined;
         } else {
-            this.previousLength = length;
+            this.previousLength = roundeLength;
         }
     }
+
+
+    private stopStatusInterval() {
+        if (!this.statusInterval) {
+            return;
+        }
+        clearInterval(this.statusInterval);
+        this.statusInterval = undefined;
+    }
+
+    private startStatusInterval() {
+        if (this.statusInterval) {
+            return;
+        }
+        this.statusInterval = setInterval(() => this.checkState(), 100);
+    }
+
+    private createPlayable(playables: SpotifyPlayable[]): JukeBoxPlayable[] {
+        return playables.map((track, i) => {
+            const type = track.type.charAt(0);
+            const out: JukeBoxPlayable = {
+                id: this.searchCount + type + (i + 1),
+                name: track.name,
+                artists: track.artists.map(artist => artist.name).join(', '),
+                serviceHref: track.href,
+                serviceUri: track.uri,
+                serviceId: track.id,
+                type: track.type,
+            };
+
+            this.searchCache[out.id] = out;
+
+            return out;
+        });
+    }
+
 }

@@ -14,12 +14,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', async (req, res) => {
-    res.sendFile(resolve(__dirname, 'index.html'));
+    res.sendFile(resolve(__dirname, 'views', 'index.html'));
 });
 
 app.get('/status', async (req, res) => {
-    const { trackName, artistName, state, vol } = await jukebox.getStatus();
-    res.json({ trackName, artistName, state, vol });
+    const { trackName, artistName, state, vol, position, length } = await jukebox.getStatus();
+    res.json({ trackName, artistName, state, vol, position, length });
 });
 
 app.post('/', async (req, res) => {
