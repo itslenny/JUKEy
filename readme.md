@@ -9,16 +9,16 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 
 ## Slack Commands
 
-`/jukey find [search term]` - Search for a song or album
-`/jukey play [song id]` - adds a song to the queue
-`/jukey play [song id] next` - adds a song to the queue to be played next
-`/jukey play [song id] now` - starts playing your song immediately
-`/jukey paus` - pauses the music
-`/jukey play` - unpauses the music
-`/jukey skip` - skips to the next song
-`/jukey vol up` - volume up
-`/jukey vol down` - volume down
-`/jukey status` - get player status
+* `/jukey find [search term]` - Search for a song or album
+* `/jukey play [song id]` - adds a song to the queue
+* `/jukey play [song id] next` - adds a song to the queue to be played next
+* `/jukey play [song id] now` - starts playing your song immediately
+* `/jukey paus` - pauses the music
+* `/jukey play` - unpauses the music
+* `/jukey skip` - skips to the next song
+* `/jukey vol up` - volume up
+* `/jukey vol down` - volume down
+* `/jukey status` - get player status
 
 
 ## Server Setup
