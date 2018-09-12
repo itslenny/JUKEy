@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>JUKEy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html,
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #CCC;
+        }
+        #jukey-wrap {
+            width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 10px;
+
+        }
+        #jukey-view {
+            border: 1px solid black;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 10px;
+            overflow: auto;
+        }
+        #jukey-view div {
+            margin: 5px 1px;
+            padding: 5px;
+            background: #EEE;
+        }
+        #jukey-input {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="jukey-wrap">
+        <h1>JUKEy is live!!</h1>
+        <div id="jukey-view">
+
+        </div>
+        <form id="jukey-form">
+            <input type="text" id="jukey-input" value="" placeholder="Enter JUKEy command i.e. help">
+            <button type="submit" style="display: none;">Send!</button>
+        </form>
+    </div>
+    <script>
+        const jukeyView = document.getElementById('jukey-view');
+        const jukeyInput = document.getElementById('jukey-input');
+        const jukeyForm = document.getElementById('jukey-form');
+        jukeyForm.addEventListener('submit', event => {
+            event.preventDefault();
+
+
+            fetch('/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    text: jukeyInput.value,
+                }),
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                },
+            }).then(response => {
+                response.json().then(data => {
+                    const row = document.createElement('div');
+
+                    if (response.status === 200) {
+                        row.innerText = data.text;
+                    } else {
+                        console.log('ERROR!');
+                        row.innerText = data
+                    }
+
+                    jukeyView.appendChild(row);
+                    jukeyView.scrollTo(0, jukeyView.scrollHeight + 100);
+                });
+            });
+            jukeyInput.value = '';
+        })
+
+    </script>
+</body>
+
+</html>
