@@ -31,7 +31,10 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 
 * clone repo / cd to root
 * `npm i` - install dependencies
-* Create a `.env` file in the root of the repo and add slack credentials to it (`CLIENT_ID`/`CLIENT_SECRET`)
+* Set up credentials
+  * Create an [app in spotify](https://developer.spotify.com/dashboard/applications) an get client id / secret
+  * Set environment variables (`CLIENT_ID`/`CLIENT_SECRET`)
+  * OR create a `.env` file in the root of the repo with the credentials and they'll be loaded via [foreman](https://github.com/strongloop/node-foreman)
 * `npm start` - run the server
 * go to [http://localhost:4567/](http://localhost:4567/) to test it out
 
