@@ -47,3 +47,4 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 - Other music services
 - Other chat services
 - Cross platform support
+- Maybe some tests???
