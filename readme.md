@@ -42,7 +42,7 @@ Uses a combination of the slack API and AppleScript to allow users to remote con
 ## Slack setup
 
 * Set up dynamic dns / port forwarding
-* Add slash command to slack pointing to the server
+* Add `/jukey` slash command to slack pointing to the server
 
 
 ## Future hopes and dreams
