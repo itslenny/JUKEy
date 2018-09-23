@@ -56,6 +56,8 @@ export class JukeBox {
     }
 
     async play(id: string): Promise<boolean> {
+        this.stopCheckPlayerPositionInterval();
+        
         const playable = this.searchCache[id];
 
         if (!playable) {
@@ -169,8 +171,6 @@ export class JukeBox {
      * Plays next song in playlist
      */
     private async playNextSong(): Promise<boolean> {
-        this.stopCheckPlayerPositionInterval();
-
         if (this.playlist.length < 1) {
             return false;
         }
