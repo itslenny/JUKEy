@@ -76,16 +76,21 @@ export class ChatHandler {
 
         const trackCount = (searchResults.tracks && searchResults.tracks.length) || 0;
         const albumCount = (searchResults.albums && searchResults.albums.length) || 0;
+        const playlistCount = (searchResults.playlists && searchResults.playlists.length) || 0;
 
         const trackResult = trackCount > 0 ?
-            `*Tracks (${trackCount}):* \n` + searchResults.tracks.map(track => `• ${track.id} – *${track.name}* by *${track.artists}*`).join('\n') + '\n\n' :
-            `No tracks found. \n`;
+            `*Tracks (${trackCount}):* \n` + searchResults.tracks.map(track => `• ${track.id} – *${track.name}* by *${track.artists}*`).join('\n') :
+            `No tracks found.`;
 
         const albumResult = albumCount > 0 ?
-            `*Albums (${albumCount}):* \n` + searchResults.albums.map(album => `• ${album.id} – *${album.name}* by *${album.artists}* (${album.tracks} tracks)`).join('\n') + '\n' :
-            `No albums found. \n`;
+            `*Albums (${albumCount}):* \n` + searchResults.albums.map(album => `• ${album.id} – *${album.name}* by *${album.artists}* (${album.tracks} tracks)`).join('\n') :
+            `No albums found.`;
 
-        return `JUKEy Search Results \`${input}\`: \n\n ${trackResult}${albumResult}`;
+        const playlistResult = playlistCount > 0 ?
+            `*Playlists (${playlistCount}):* \n` + searchResults.playlists.map(playlist => `• ${playlist.id} – *${playlist.name}* by *${playlist.artists}* (${playlist.tracks} tracks)`).join('\n') :
+            `No playlists found.`;
+
+        return `JUKEy Search Results \`${input}\`: \n\n ${trackResult}\n\n${albumResult}\n\n${playlistResult}`;
 
 
     }
@@ -95,25 +100,34 @@ export class ChatHandler {
             return this.jukebox.resume() ? 'Let there be sound!' : `Correct me if I'm wrong, but I think it's already playing`;
         }
 
-        const [id, when = ''] = input.trim().split(' ');
-
-        if (when === 'now') {
-            if (await this.jukebox.play(id)) {
-                return 'Coming right up!';
+        const fields = input.trim().split(' ');
+        const ids = [];
+        const commands = new Set();
+        fields.forEach(field => {
+            const trimField = field.trim();
+            if (trimField.match(/^\d+\S\d+$/)) {
+                ids.push(trimField);
+            } else {
+                commands.add(trimField);
             }
-        } else if (when === 'next') {
-            if (-1 !== await this.jukebox.queue(id, true)) {
+        });
+
+        let result = `Sorry, I couldn't seem to do that. Are you sure all the ids you entered are valid?`;
+
+        if (commands.has('next') || commands.has('now')) {
+
+            if (-1 !== await this.jukebox.queue(ids, true, commands.has('now'))) {
                 return `It'll be up next!`;
             }
         } else {
-            const pos = await this.jukebox.queue(id);
+            const pos = await this.jukebox.queue(ids);
             if (pos !== -1) {
                 const s = pos === 1 ? '' : 's';
                 return `Added to queue. There are ${pos} song${s} ahead of you`;
             }
         }
 
-        return `Sorry, I couldn't seem to do that...`;
+        return result;
     }
 
     private async pauseHandler(): Promise<string> {

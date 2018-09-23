@@ -6,6 +6,7 @@ const { CLIENT_ID, CLIENT_SECRET } = process.env;
 const SPOTIFY_API_HOST = 'api.spotify.com';
 const SPOTIFY_API_SEARCH_URI = '/v1/search';
 const SPOTIFY_API_ALBUM_TRACKS_URI = id => `/v1/albums/${id}/tracks`;
+const SPOTIFY_API_PLAYLIST_TRACKS_URI = id => `/v1/playlists/${id}/tracks`;
 const SPOTIFY_TOKEN_HOST = 'accounts.spotify.com';
 const SPOTIFY_TOKEN_URI = '/api/token';
 
@@ -19,22 +20,33 @@ export interface SpotifyPlayable {
     uri: string;
     id: string;
     name: string;
-    artists: SpotifyArtist[];
+    artists?: SpotifyArtist[];
     type: string;
     total_tracks: number;
+    tracks?: SpotifyPlayableTracks;
+}
+
+interface SpotifyPlayableTracks {
+    href: string;
+    total: number;
 }
 
 export interface SpotifySearchResult {
     tracks: SpotifyPlayable[];
     albums: SpotifyPlayable[];
+    playlists: SpotifyPlayable[];
 }
 
 interface SpotifyAlbumTracksResponse {
     items: SpotifyPlayable[];
 }
+interface SpotifyPlaylistTracksResponse {
+    items: { track: SpotifyPlayable }[];
+}
 interface SpotifySearchResponse {
     albums: { items: SpotifyPlayable[] };
     tracks: { items: SpotifyPlayable[] };
+    playlists: { items: SpotifyPlayable[] };
 }
 
 // private
@@ -87,6 +99,24 @@ async function getAccessToken(): Promise<string> {
  */
 export class SpotifyApi {
 
+    static async getPlaylistTracks(id: string): Promise<SpotifyPlayable[]> {
+        const token = await getAccessToken();
+
+        const options = {
+            hostname: SPOTIFY_API_HOST,
+            path: SPOTIFY_API_PLAYLIST_TRACKS_URI(id),
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        };
+
+        const result = await request<SpotifyPlaylistTracksResponse>(options, 'grant_type=client_credentials');
+        return (result && result.items.map(item => item.track)) || [];
+    }
+
     static async getAlbumTracks(id: string): Promise<SpotifyPlayable[]> {
         const token = await getAccessToken();
 
@@ -109,7 +139,7 @@ export class SpotifyApi {
         const token = await getAccessToken();
         const query = stringify({
             q: term,
-            type: 'track,album',
+            type: 'track,album,playlist',
             limit: 10,
             offset: 0,
         });
@@ -125,10 +155,11 @@ export class SpotifyApi {
             }
         };
         const result = await request<SpotifySearchResponse>(options);
-
+        
         return {
             albums: (result && result.albums && result.albums.items) || [],
             tracks: (result && result.tracks && result.tracks.items) || [],
+            playlists: (result && result.playlists && result.playlists.items) || [],
         }
     }
 }

@@ -4,6 +4,7 @@ import { SpotifyApi, SpotifyPlayable } from './spotify/spotify-api';
 export interface JukeBoxSearchResult {
     tracks: JukeBoxPlayable[];
     albums: JukeBoxPlayable[];
+    playlists: JukeBoxPlayable[];
 }
 
 export interface JukeBoxPlayable {
@@ -52,12 +53,13 @@ export class JukeBox {
         return {
             tracks: this.createPlayable(searchResult.tracks),
             albums: this.createPlayable(searchResult.albums),
+            playlists: this.createPlayable(searchResult.playlists),
         }
     }
 
     async play(id: string): Promise<boolean> {
         this.stopCheckPlayerPositionInterval();
-        
+
         const playable = this.searchCache[id];
 
         if (!playable) {
@@ -65,7 +67,7 @@ export class JukeBox {
         }
 
         if (playable.type === 'album') {
-            return await this.queue(id, true, true) > -1;
+            return await this.queue([id], true, true) > -1;
         }
 
         const result = await SpotifyClient.play(playable.serviceUri);
@@ -93,15 +95,26 @@ export class JukeBox {
         return true;
     }
 
-    async queue(id: string, next?: boolean, now?: boolean): Promise<number> {
-        const playable = this.searchCache[id];
-        if (!playable) {
+    async queue(ids: string[], next?: boolean, now?: boolean): Promise<number> {
+        const playables: JukeBoxPlayable[] = ids.map(id => this.searchCache[id]);
+        
+        if (!playables.reduce((state, p) => state && !!p, true)) {
             return -1;
         }
 
-        let addPlayables: JukeBoxPlayable[] = [playable];
-        if (playable.type === 'album') {
-            addPlayables = this.createPlayable(await SpotifyApi.getAlbumTracks(playable.serviceId));
+        let addPlayables: JukeBoxPlayable[] = [];
+
+        for (let i = 0; i < playables.length; i++) {
+            const playable = playables[i];
+            if (playable.type === 'album') {
+                const albumTrackPrefix = 'album' + Date.now();
+                addPlayables = [...addPlayables, ...this.createPlayable(await SpotifyApi.getAlbumTracks(playable.serviceId), albumTrackPrefix)];
+            } else if (playable.type === 'playlist') {
+                const albumTrackPrefix = 'playlist' + Date.now();
+                addPlayables = [...addPlayables, ...this.createPlayable(await SpotifyApi.getPlaylistTracks(playable.serviceId), albumTrackPrefix)];
+            } else {
+                addPlayables.push(playable);
+            }
         }
 
         const state = await SpotifyClient.getState();
@@ -230,18 +243,18 @@ export class JukeBox {
         this.checkPlayerPositionInterval = setInterval(() => this.checkPlayerPosition(), 100);
     }
 
-    private createPlayable(playables: SpotifyPlayable[]): JukeBoxPlayable[] {
+    private createPlayable(playables: SpotifyPlayable[], idPrefix: string = ''): JukeBoxPlayable[] {
         return playables.map((playable, i) => {
             const type = playable.type.charAt(0);
             const out: JukeBoxPlayable = {
-                id: this.searchCount + type + (i + 1),
+                id: idPrefix + this.searchCount + type + (i + 1),
                 name: playable.name,
-                artists: playable.artists.map(artist => artist.name).join(', '),
+                artists: (playable.artists && playable.artists.map(artist => artist.name).join(', ')) || '',
                 serviceHref: playable.href,
                 serviceUri: playable.uri,
                 serviceId: playable.id,
                 type: playable.type,
-                tracks: playable.total_tracks || 1,
+                tracks: playable.tracks && playable.tracks.total || playable.total_tracks || 1,
             };
 
             this.searchCache[out.id] = out;
