@@ -29,6 +29,8 @@ export interface JukeBoxStatus {
     vol: number;
 }
 
+const PLAYER_POLLING_INTERVAL = 1000;
+
 export class JukeBox {
 
     private searchCount = 0;
@@ -240,7 +242,7 @@ export class JukeBox {
         if (this.checkPlayerPositionInterval) {
             return;
         }
-        this.checkPlayerPositionInterval = setInterval(() => this.checkPlayerPosition(), 100);
+        this.checkPlayerPositionInterval = setInterval(() => this.checkPlayerPosition(), PLAYER_POLLING_INTERVAL);
     }
 
     private createPlayable(playables: SpotifyPlayable[], idPrefix: string = ''): JukeBoxPlayable[] {

@@ -19,6 +19,9 @@ const SPOTIFY_GET_COMMANDS = {
 
 const VOLUME_INCREMENT = 10;
 
+// kill apple script commands after this delay
+const PROCESS_TERMINATION_DELAY = 500;
+
 export type SpotifyState = 'playing' | 'stopped' | 'paused';
 
 /**
@@ -113,12 +116,16 @@ export class SpotifyClient {
 
     private static runCommand(command: string): Promise<string> {
         return new Promise((resolve, reject) => {
-            exec(`osascript -e '${command}'`, (err, out, stderr) => {
+            let p = exec(`osascript -e '${command}'`, (err, out, stderr) => {
                 if (err || stderr) {
                     resolve();
                 }
                 resolve(out.toString().trim());
             });
+            setTimeout(() => {
+                p.kill();
+                p = undefined;
+            }, PROCESS_TERMINATION_DELAY);
         });
     }
 }
