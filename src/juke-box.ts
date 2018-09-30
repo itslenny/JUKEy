@@ -31,6 +31,8 @@ export interface JukeBoxStatus {
 
 const PLAYER_POLLING_INTERVAL = 500;
 
+const SONG_END_OFFSET = 10;
+
 export class JukeBox {
 
     private searchCount = 0;
@@ -38,6 +40,7 @@ export class JukeBox {
     private playlist: JukeBoxPlayable[] = [];
     private playing: JukeBoxPlayable;
 
+    private nextTrackTimeout: NodeJS.Timer;
     private checkPlayerPositionInterval: NodeJS.Timer;
 
     constructor() {
@@ -59,6 +62,7 @@ export class JukeBox {
     }
 
     async play(id: string): Promise<boolean> {
+        this.clearNextTrackTimeout();
         this.stopCheckPlayerPositionInterval();
 
         const playable = this.searchCache[id];
@@ -98,7 +102,7 @@ export class JukeBox {
 
     async queue(ids: string[], next?: boolean, now?: boolean): Promise<number> {
         const playables: JukeBoxPlayable[] = ids.map(id => this.searchCache[id]);
-        
+
         if (!playables.reduce((state, p) => state && !!p, true)) {
             return -1;
         }
@@ -216,18 +220,27 @@ export class JukeBox {
         }
 
         // check if track length changes incase we miss the end of song position
-        if (remaining < 2) {
-            this.playNextSong();
+        if (remaining < SONG_END_OFFSET && this.nextTrackTimeout === undefined) {
+            this.nextTrackTimeout = setTimeout(() => {
+                this.nextTrackTimeout = undefined;
+                this.playNextSong()
+            }, Math.floor(remaining * 1000));
+        }
+    }
+
+    private clearNextTrackTimeout() {
+        if (this.nextTrackTimeout) {
+            clearTimeout(this.nextTrackTimeout);
+            this.nextTrackTimeout = undefined;
         }
     }
 
 
     private stopCheckPlayerPositionInterval() {
-        if (!this.checkPlayerPositionInterval) {
-            return;
+        if (this.checkPlayerPositionInterval) {
+            clearInterval(this.checkPlayerPositionInterval);
+            this.checkPlayerPositionInterval = undefined;
         }
-        clearInterval(this.checkPlayerPositionInterval);
-        this.checkPlayerPositionInterval = undefined;
     }
 
     private startCheckPlayerPositionInterval() {
