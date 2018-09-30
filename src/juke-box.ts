@@ -215,7 +215,8 @@ export class JukeBox {
             return;
         }
 
-        if (isNaN(remaining)) {
+        // don't abide bad data
+        if (!remaining || isNaN(remaining)) {
             return;
         }
 
