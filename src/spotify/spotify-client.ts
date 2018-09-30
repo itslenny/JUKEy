@@ -15,6 +15,7 @@ const SPOTIFY_GET_COMMANDS = {
     position: 'tell application "Spotify" to player position as string',
     length: 'tell application "Spotify" to (duration of current track / 1000) as string',
     volume: 'tell application "Spotify" to sound volume as integer',
+    remaining: 'tell application "Spotify" to ((duration of current track / 1000) - (player position)) as string',
 }
 
 const VOLUME_INCREMENT = 10;
@@ -112,6 +113,10 @@ export class SpotifyClient {
 
     static async getCurrentTrackLength(): Promise<number> {
         return parseFloat('0' + await SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.length));
+    }
+
+    static async getCurrentTrackTimeRemaining(): Promise<number> {
+        return parseFloat('0' + await SpotifyClient.runCommand(SPOTIFY_GET_COMMANDS.remaining));
     }
 
     private static runCommand(command: string): Promise<string> {

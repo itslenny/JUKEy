@@ -114,10 +114,12 @@ export class ChatHandler {
 
         let result = `Sorry, I couldn't seem to do that. Are you sure all the ids you entered are valid?`;
 
-        if (commands.has('next') || commands.has('now')) {
+        const playNow = commands.has('now');
+        const playNext = commands.has('next');
+        if (playNext || playNow) {
 
-            if (-1 !== await this.jukebox.queue(ids, true, commands.has('now'))) {
-                return `It'll be up next!`;
+            if (-1 !== await this.jukebox.queue(ids, true, playNow)) {
+                return playNow ? `Coming in hot!!` : `It'll be up next!`;
             }
         } else {
             const pos = await this.jukebox.queue(ids);

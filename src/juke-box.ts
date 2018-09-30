@@ -29,7 +29,7 @@ export interface JukeBoxStatus {
     vol: number;
 }
 
-const PLAYER_POLLING_INTERVAL = 1000;
+const PLAYER_POLLING_INTERVAL = 500;
 
 export class JukeBox {
 
@@ -38,7 +38,6 @@ export class JukeBox {
     private playlist: JukeBoxPlayable[] = [];
     private playing: JukeBoxPlayable;
 
-    private previousLength: number;
     private checkPlayerPositionInterval: NodeJS.Timer;
 
     constructor() {
@@ -204,8 +203,7 @@ export class JukeBox {
      * Detects end of track and plays next item in playlist
      */
     private async checkPlayerPosition() {
-        const position = await SpotifyClient.getCurrentTrackPosition();
-        const length = await SpotifyClient.getCurrentTrackLength();
+        const remaining = await SpotifyClient.getCurrentTrackTimeRemaining();
 
         // Fixes bug where a check happens while we're waiting for the above to resolve
         // this causes a double skip if it happens during a "skip" action
@@ -213,18 +211,13 @@ export class JukeBox {
             return;
         }
 
-        if (!position || !length) {
+        if (isNaN(remaining)) {
             return;
         }
 
-        const roundedPosition = Math.ceil(position);
-        const roundedLength = Math.floor(length);
-
         // check if track length changes incase we miss the end of song position
-        if (roundedPosition >= roundedLength || (this.previousLength && this.previousLength !== roundedLength)) {
+        if (remaining < 2) {
             this.playNextSong();
-        } else {
-            this.previousLength = roundedLength;
         }
     }
 
@@ -234,7 +227,6 @@ export class JukeBox {
             return;
         }
         clearInterval(this.checkPlayerPositionInterval);
-        this.previousLength = undefined;
         this.checkPlayerPositionInterval = undefined;
     }
 
